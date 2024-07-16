@@ -6,11 +6,19 @@ import React, { useEffect, useState } from 'react'
 import Webcam from 'react-webcam'
 import useSpeechToText from 'react-hook-speech-to-text';
 import { Mic } from 'lucide-react'
+import { toast } from 'sonner'
+import { chatSession } from '@/utils/GeminiAIModal'
+import { db } from '@/utils/db'
+import { UserAnswer } from '@/utils/schema'
+import { useUser } from '@clerk/nextjs'
+import moment from 'moment'
 
 
-function RecordAnsSection() {
+function RecordAnsSection({ mockInterviewQuestion, activeQuestionIndex ,interviewData}: { mockInterviewQuestion: any[], activeQuestionIndex: number, interviewData: any }) {
 
     const [userAnswer, setUserAnswer] = useState<string>('')
+    const {user} = useUser();
+    const [loading, setLoading] = useState<boolean>(false)
 
     const {
         error,
@@ -19,6 +27,7 @@ function RecordAnsSection() {
         results,
         startSpeechToText,
         stopSpeechToText,
+        setResults  
       } = useSpeechToText({
         continuous: true,
         useLegacyResults: false
@@ -32,6 +41,61 @@ function RecordAnsSection() {
           }
         })
       },[results]);
+
+      useEffect(()=>{
+        if(!isRecording && userAnswer.length > 10){
+          UpdateUserAnswer()
+        }
+      },[userAnswer]);
+
+      const StartStopRecoding = async() =>{
+        if(isRecording){
+          stopSpeechToText()
+          // if(userAnswer?.length<10){
+          //   setLoading(false)
+          //   toast('Error while saving your answer, please record again')
+          //   return;
+          // }
+          
+        }else{
+          startSpeechToText()
+        }
+      }
+
+      const UpdateUserAnswer = async() =>{
+        console.log(userAnswer)
+        setLoading(true)
+        const feedbackPrompt = "Question:" + mockInterviewQuestion[activeQuestionIndex]?.question +
+                    ", User Answer:" + userAnswer + ", Depends upon user question and given answer for given interview question "+
+                    "Please Give Up Rating for anmswer and feedback for area of improvement if any "+
+                    "in just 3-5 lines to imporove it in JSON format with rating field and feedback field";
+
+          const result = await chatSession.sendMessage(feedbackPrompt);
+
+          const mockJSONResp = (result.response.text()).replace('```json','').replace('```','');
+
+          console.log(mockJSONResp);
+          const JsonFeedbackResp = JSON.parse(mockJSONResp);
+
+          const resp = await db.insert(UserAnswer).values([{
+            mockIdRef: interviewData?.mockId || '',
+            question: mockInterviewQuestion[activeQuestionIndex]?.question || '',
+            userEmail: user?.primaryEmailAddress?.emailAddress || '',
+            createdAt: moment().format('DD-MM-YYYY'),
+            correctAns: mockInterviewQuestion[activeQuestionIndex]?.answer || '',
+            userAns: userAnswer || '',
+            feedback: JsonFeedbackResp?.feedback || '',
+            rating: JsonFeedbackResp?.rating || '',
+          }])
+
+          if(resp){
+            toast('user Answer Recorded Successfully!')
+            setResults([]);
+          }
+          setResults([]);
+          
+          setLoading(false)
+      }
     
   return (
     <div className='flex items-center  justify-center flex-col'>
@@ -50,8 +114,10 @@ function RecordAnsSection() {
         }}
         />
     </div>
-    <Button variant='outline' className='my-10 hover:bg-purple-300' 
-    onClick={isRecording?stopSpeechToText:startSpeechToText}
+    <Button 
+    disabled={loading}
+    variant='outline' className='my-10 hover:bg-purple-300' 
+    onClick={StartStopRecoding}
     >{isRecording?
     
     <h2 className='text-red-600 flex gap-2'>
@@ -70,7 +136,7 @@ function RecordAnsSection() {
         {interimResult && <li>{interimResult}</li>}
       </ul> */}
 
-      <Button onClick={()=>console.log(userAnswer)}>Show User Answer</Button>
+      {/* <Button onClick={()=>console.log(userAnswer)}>Show User Answer</Button> */}
     </div>
   )
 }

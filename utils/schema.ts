@@ -17,3 +17,15 @@ export const MockInterview = pgTable('MockInterview', {
     
     mockId:text('mockId').notNull(),
 })
+
+export const UserAnswer = pgTable('UserAnswer', {
+    id:serial('id').primaryKey(),
+    mockIdRef:text('mockId').notNull(),
+    question:text('question').notNull(),
+    correctAns:text('correctAns'),
+    userAns:text('userAns'),
+    feedback:text('feedback'),
+    rating:text('rating'),
+    userEmail:text('userEmail').notNull(),
+    createdAt:text('createdAt'),
+})
