@@ -434,7 +434,6 @@ function ContactUs() {
       <div>
         
       </div>
-      <div></div>
     </div>
     <div>
     <h2 className="text-center text-xl md:text-4xl font-bold text-black dark:text-white border">
