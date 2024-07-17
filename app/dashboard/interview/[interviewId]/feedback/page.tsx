@@ -45,11 +45,21 @@ function Feedback({ params }: { params: any }) {
 
     const route = useRouter()
 
+    const totalRating = feedbackList.reduce((acc, item) => {
+        return acc + parseInt(item.rating || '0')
+    }, 0)
+    const ques:any = process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT;
+
   return (
     <div className='p-10'>
-        <h2 className='text-3xl font-bold text-green-500'>Congratulation!</h2>
-        <h2 className='font-bold text-2xl'>Here is your Interview Feedback</h2>
-        <h2 className='text-purple-600 text-lg my-3'>Your Overall Interview Rating: <strong>7/10</strong></h2>
+
+
+        {feedbackList?.length ==0?
+        <h2 className='font-bold text-xl text-gray-500'>NO Interview Feedback record Found</h2>:
+        <>
+                <h2 className='text-3xl font-bold text-green-500'>Congratulation!</h2>
+                <h2 className='font-bold text-2xl'>Here is your Interview Feedback</h2>
+        <h2 className='text-purple-600 text-lg my-3'>Your Overall Interview Rating: <strong>{totalRating/ques}/10</strong></h2>
         <h2 className='text-sm text-gray-500'>Find below interview question with correct answer, Your answer and feedback for improvement</h2>
 
         {feedbackList.length > 0 ? feedbackList.map((item, index) => (
@@ -69,7 +79,7 @@ function Feedback({ params }: { params: any }) {
             </Collapsible>
         )) : <p>No feedback available.</p>}
 
-        
+</>}
         <Button onClick={()=>route.replace('/dashboard')}>Go Home</Button>
     </div>
   )

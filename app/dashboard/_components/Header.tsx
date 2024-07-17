@@ -10,7 +10,6 @@ function Header() {
   const path = usePathname();
   const menuItems = [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Questions', href: '/dashboard/questions' },
     { name: 'How It Works?', href: '/dashboard/how' },
     { name: 'Contact Us', href: '/dashboard/contactus' },
   ];
